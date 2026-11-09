@@ -220,6 +220,7 @@
       animation-play-state: paused !important
     }
 
+    /* ===== NAV ===== */
     nav {
       position: fixed;
       top: 0;
@@ -362,6 +363,44 @@
       }
     }
 
+    /* hamburger button (hidden on big screens) */
+    .nav-toggle {
+      display: none;
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border-g);
+      border-radius: 10px;
+      background: var(--surface);
+      cursor: pointer;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 0
+    }
+
+    .nav-toggle span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--green);
+      border-radius: 2px;
+      transition: transform .3s, opacity .3s
+    }
+
+    .nav-toggle.open span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg)
+    }
+
+    .nav-toggle.open span:nth-child(2) {
+      opacity: 0
+    }
+
+    .nav-toggle.open span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg)
+    }
+
+    /* ===== HERO ===== */
     #home {
       min-height: 100vh;
       display: grid;
@@ -737,6 +776,7 @@
       }
     }
 
+    /* ===== SECTIONS ===== */
     .sec-tag {
       font-family: var(--mono);
       font-size: .76rem;
@@ -1168,6 +1208,7 @@
       z-index: 1
     }
 
+    /* ===== FOOTER ===== */
     footer {
       position: relative;
       z-index: 2;
@@ -1364,6 +1405,7 @@
       }
     }
 
+    /* ===== RESPONSIVE ===== */
     @media (max-width:960px) {
       #home {
         grid-template-columns: 1fr;
@@ -1397,7 +1439,50 @@
         padding: 24px 12px
       }
 
+      /* hamburger menu */
+      .nav-toggle {
+        display: flex
+      }
+
+      .nav-badge {
+        margin-left: auto;
+        margin-right: 12px
+      }
+
       .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(9, 9, 15, .97);
+        border-bottom: 1px solid var(--border-g);
+        padding: 8px 6% 16px;
+        opacity: 0;
+        transform: translateY(-12px);
+        pointer-events: none;
+        transition: opacity .25s, transform .25s
+      }
+
+      .nav-links.open {
+        opacity: 1;
+        transform: none;
+        pointer-events: auto
+      }
+
+      .nav-links li {
+        border-bottom: 1px solid var(--border)
+      }
+
+      .nav-links a {
+        display: block;
+        padding: 16px 4px;
+        font-size: .9rem
+      }
+
+      .nav-links a::after {
         display: none
       }
     }
@@ -1463,6 +1548,14 @@
     }
 
     @media (max-width:520px) {
+      .nav-badge {
+        display: none
+      }
+
+      .nav-toggle {
+        margin-left: auto
+      }
+
       footer {
         flex-direction: column;
         justify-content: center;
@@ -1586,7 +1679,7 @@
   <nav>
     <a href="#home" class="nav-logo"><span class="tilde">~</span><span class="slash">/</span><span
         class="folder">fahad-portfolio</span><span class="dollar">$</span><span class="cursor"></span></a>
-    <ul class="nav-links">
+    <ul class="nav-links" id="navLinks">
       <li><a href="#about"><span>// </span>about</a></li>
       <li><a href="#stack"><span>// </span>stack</a></li>
       <li><a href="#projects"><span>// </span>projects</a></li>
@@ -1596,6 +1689,9 @@
     <div class="nav-badge">
       <div class="nav-badge-dot"></div>available
     </div>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <section id="home">
@@ -2016,6 +2112,21 @@
       var tick = false;
       addEventListener('scroll', function () { if (tick) return; tick = true; requestAnimationFrame(function () { update(); tick = false }) }, { passive: true });
       addEventListener('resize', update); update();
+    })();
+
+    /* ===== Hamburger menu ===== */
+    (function () {
+      var btn = document.getElementById('navToggle'), menu = document.getElementById('navLinks');
+      function setOpen(o) {
+        menu.classList.toggle('open', o);
+        btn.classList.toggle('open', o);
+        btn.setAttribute('aria-expanded', o);
+        btn.setAttribute('aria-label', o ? 'Close menu' : 'Open menu');
+      }
+      btn.addEventListener('click', function () { setOpen(!menu.classList.contains('open')) });
+      menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { setOpen(false) }) });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setOpen(false) });
+      addEventListener('resize', function () { if (innerWidth > 960) setOpen(false) });
     })();
   </script>
 </body>
