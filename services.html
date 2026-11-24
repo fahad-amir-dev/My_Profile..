@@ -2230,7 +2230,6 @@
             s.g.rotation.y = q * 2.5 + t * .1 + m.x * .8; s.g.rotation.x = .5 + m.y * .6;
           }; S.push(s);
         }
-
         // 3 · MOTION: king cobra — starts reared up with a flared hood, strikes, then drops and SPRINTS along a wavy track as you scroll
         {
           const s = mk(0x3dff9e), clamp01 = x => clamp(x);
@@ -2246,7 +2245,6 @@
             const w = WA * Math.sin(sa * WK);
             return [c[0] + bx * w, c[1], c[2] + bz * w];
           };
-
           const stex = (() => {
             const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.fillStyle = '#333'; x.fillRect(0, 0, 128, 128);
             for (let r = -1; r <= 9; r++)for (let k = -1; k <= 9; k++) {
