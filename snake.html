@@ -5,14 +5,19 @@
 <style>
 :root{--bg:#05080a;--fg:#d8f5e4;--ac:#c0262d;box-sizing:border-box}
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#05080a}}
-html,body{height:100%;margin:0;background:radial-gradient(ellipse at 50% 60%,#26241c 0%,#12110d 45%,#060605 100%);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
-canvas{display:block;width:100%;height:100%;touch-action:none;cursor:pointer}
+html,body{margin:0;background:radial-gradient(ellipse at 50% 60%,#26241c 0%,#12110d 45%,#060605 100%) fixed;color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden}
+canvas{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:pan-y;cursor:pointer}
+#sp{height:280vh}
 .hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px 0;text-align:center;pointer-events:none}
 .hud h1{margin:0;font-size:1.1rem;letter-spacing:.3em;text-transform:uppercase;color:var(--ac)}
 .hud p{margin:6px 0 0;font-size:.85rem;opacity:.7}
+.hint{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;opacity:0;font-size:.7rem;letter-spacing:.35em;text-transform:uppercase;color:var(--fg)}
+.hint i{width:16px;height:16px;border-right:2px solid var(--ac);border-bottom:2px solid var(--ac);transform:rotate(45deg);animation:bob 1.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(45deg);opacity:.35}50%{transform:translateY(8px) rotate(45deg);opacity:1}}
 </style></head><body>
-<canvas id="c"></canvas><div id="fl" style="position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(180,0,0,.75));opacity:0"></div>
-<div class="hud"><h1>King Cobra</h1><p>Tap the cobra… if you dare</p></div>
+<canvas id="c"></canvas><div id="sp"></div><div id="fl" style="position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(180,0,0,.75));opacity:0"></div>
+<div class="hud"><h1>King Cobra</h1><p>Scroll to send the cobra away · or tap it… if you dare</p></div>
+<div class="hint" id="hint"><span>Scroll</span><i></i></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const T=THREE,cv=document.getElementById('c');
@@ -30,8 +35,8 @@ function mk(color){const s={g:new T.Group(),mats:[],base:1};
  s.fm=o=>{const m=new T.MeshBasicMaterial({color,transparent:true,opacity:o,blending:T.AdditiveBlending,depthWrite:false});s.mats.push([m,o]);return m};
  s.pm=(z,o)=>{const m=new T.PointsMaterial({color,size:z*.06,transparent:true,opacity:o>.5?1:o*3,blending:T.AdditiveBlending,depthWrite:false});s.mats.push([m,1]);return m};
  scene.add(s.g);return s}
-function resize(){renderer.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.position.z=innerWidth<innerHeight?9:6.5;cam.updateProjectionMatrix()}
-addEventListener('resize',resize);resize();
+function resize(){const w=cv.clientWidth||innerWidth,h=cv.clientHeight||innerHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.position.z=w<h?9:6.5;cam.updateProjectionMatrix()}
+addEventListener('resize',resize);if(window.ResizeObserver)new ResizeObserver(resize).observe(cv);resize();
 
 // 3 · MOTION: KING COBRA v2
 {
@@ -82,7 +87,7 @@ const bg=new T.BufferGeometry(),pa=new T.BufferAttribute(pos,3),na=new T.BufferA
 pa.setUsage(T.DynamicDrawUsage);na.setUsage(T.DynamicDrawUsage);ca2.setUsage(T.DynamicDrawUsage);
 bg.setAttribute('position',pa);bg.setAttribute('normal',na);bg.setAttribute('color',ca2);bg.setAttribute('uv',new T.BufferAttribute(uv,2));bg.setIndex(idx);
 const bmat=new T.MeshStandardMaterial({map:stex,bumpMap:stex,bumpScale:2.4,vertexColors:true,roughness:.5,metalness:.08,emissive:0x050805,emissiveIntensity:.25,transparent:true});
-s.mats.push([bmat,1]);s.g.add(new T.Mesh(bg,bmat));
+s.mats.push([bmat,1]);const bodyM=new T.Mesh(bg,bmat);bodyM.frustumCulled=false;bg.boundingSphere=new T.Sphere(new T.Vector3(),100);s.g.add(bodyM);
 const amb=new T.AmbientLight(0xa09a8a,.75),dl=new T.DirectionalLight(0xffffff,1.05),pl1=new T.PointLight(0xbfcfe0,.4),pl2=new T.PointLight(0xffe2c0,.5);
 dl.position.set(2,4,5);pl1.position.set(-4,-2,3);pl2.position.set(4,-3,-2);scene.add(amb,dl,pl1,pl2);
 const hdG=new T.Group();s.g.add(hdG);
@@ -111,8 +116,26 @@ const epm=s.pm(.9,.06);epm.color.set(0xffffff);epm.vertexColors=true;epm.visible
 const P=new Float32Array(M*3),v3x=new T.Vector3(),v3y=new T.Vector3(),v3z=new T.Vector3(),mx4=new T.Matrix4(),HF=new Float32Array(9),H0=new Float32Array(9);
 let intro=0,standW=1,accA=0,pulse=0,st=1,lastT=0,sPh=0,strike=0,awake=false,fired=false,emit=0,seq=-1,spitsDone=0,capture=false,frozen=0,hold=0,cen=0,jaw=0,drip=0,feint=0;
 const NV=70,vp=new Float32Array(NV*3).fill(1e4),vv=new Float32Array(NV*3),vl=new Float32Array(NV),vg=new T.BufferGeometry();
-vg.setAttribute('position',new T.BufferAttribute(vp,3));const vpm=s.pm(1,.1);vpm.color.set(0xc8ff3a);s.g.add(new T.Points(vg,vpm));
-s.hit=()=>{SND.init();if(seq<0&&intro>=3){seq=0;spitsDone=0;capture=true;sPh=0;SND.init();SND.slither(false);SND.hiss()}};
+vg.setAttribute('position',new T.BufferAttribute(vp,3));const vpm=s.pm(1,.1);vpm.color.set(0xc8ff3a);{const vP=new T.Points(vg,vpm);vP.frustumCulled=false;s.g.add(vP)}
+
+// ── NEW: 3D intro text "SCROLL BASED ANIMATION" (stacked glyph layers = extruded look) ──
+const TX=new T.Group();s.g.add(TX);
+const TS='SCROLL BASED ANIMATION',L=[],ADV=.22,PG=new T.PlaneGeometry(.3,.3);
+for(let i=0;i<TS.length;i++){if(TS[i]===' ')continue;
+ const mc=()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.font='900 96px system-ui,Arial,sans-serif';x.textAlign='center';x.textBaseline='middle';return[c,x]};
+ const[c,x]=mc(),[c2,x2]=mc();x.fillStyle='#fff';x.fillText(TS[i],64,68);
+ const gr=x2.createLinearGradient(0,20,0,110);gr.addColorStop(0,'#fff6c9');gr.addColorStop(.5,'#f2b630');gr.addColorStop(1,'#a8650b');
+ x2.lineWidth=6;x2.lineJoin='round';x2.strokeStyle='#5a3306';x2.strokeText(TS[i],64,68);x2.fillStyle=gr;x2.fillText(TS[i],64,68);
+ const tx=new T.CanvasTexture(c),ft=new T.CanvasTexture(c2),g=new T.Group();
+ for(let l=0;l<8;l++){const fr=l===7,m=new T.Mesh(PG,new T.MeshBasicMaterial({map:fr?ft:tx,alphaTest:.45,color:fr?0xffffff:new T.Color(0x4a2c06).lerp(new T.Color(0xb9791a),l/6)}));m.position.z=(l-7)*.011;g.add(m)}
+ g.position.x=(i-(TS.length-1)/2)*ADV;TX.add(g);L.push(g)}
+const DB=360,dp=new Float32Array(DB*3).fill(1e4),dv=new Float32Array(DB*3),dg=new T.BufferGeometry();
+dg.setAttribute('position',new T.BufferAttribute(dp,3));const dm=s.pm(2.6,1);dm.color.set(0xffd25a);{const dP=new T.Points(dg,dm);dP.frustumCulled=false;TX.add(dP)}let bo=0;
+const WX=new Float32Array(301),WY=new Float32Array(301),WZ=new Float32Array(301),CA=new Float32Array(301);
+const sc2=document.createElement('canvas');sc2.width=sc2.height=128;{const x=sc2.getContext('2d'),g=x.createRadialGradient(64,64,4,64,64,62);g.addColorStop(0,'rgba(0,0,0,.7)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128)}
+const shM=new T.MeshBasicMaterial({map:new T.CanvasTexture(sc2),transparent:true,opacity:0,depthWrite:false}),shP=new T.Mesh(new T.PlaneGeometry(3.6,3.6),shM);shP.rotation.x=-Math.PI/2;shP.position.set(-.2,-1.3,0);shP.renderOrder=-1;s.g.add(shP);
+
+s.hit=()=>{SND.init();if(seq<0&&intro>=11.6){seq=0;spitsDone=0;capture=true;sPh=0;SND.init();SND.slither(false);SND.hiss()}};
 s.off=()=>{awake=false;seq=-1;sPh=0;st=1;cen=0;hold=0;jaw=0;feint=0;SND.slither(false)};
 s.tap=(x,y)=>{s.g.updateMatrixWorld(true);const thr=Math.max(46,80*Math.min(1,s.base||1));for(let i=0;i<M;i+=3){v3x.set(P[i*3],P[i*3+1],P[i*3+2]).applyMatrix4(s.g.matrixWorld).project(cam);if(Math.hypot((v3x.x*.5+.5)*innerWidth-x,(-v3x.y*.5+.5)*innerHeight-y)<thr)return true}return false};
 const wrapPI=x=>Math.atan2(Math.sin(x),Math.cos(x));
@@ -122,10 +145,10 @@ s.up=(p,q,t,m,vel)=>{
  const still=seq>=0;
  if(still){seq+=dt;
   if(spitsDone<3&&seq>=1.3+spitsDone*.9){spitsDone++;sPh=1;fired=false;SND.spit();shake=1;flash=1}
-  if(seq>=4.4){seq=-1;awake=true;SND.hiss()}}
- if(intro<3){intro+=dt;if(intro>=3){awake=true;SND.hiss()}}
- if(!still){feint+=dt;if(feint>(awake?2.2:1.6)+Math.sin(t*1.3)*.6&&sPh<=0){feint=0;sPh=1;fired=true;shake=Math.max(shake,.4)}}else feint=0;
- st+=(((awake&&!still)?.35:1)-st)*.05;cen+=((still?1:0)-cen)*.05;standW+=(((awake&&!still)?0:1)-standW)*.045;
+  if(seq>=4.4){seq=-1;SND.hiss()}}
+ intro+=dt;const Tm=intro;
+ if(!still){feint+=dt;if(feint>(awake?2.2:1.6)+Math.sin(t*1.3)*.6&&sPh<=0&&Tm>11.6){feint=0;sPh=1;fired=true;shake=Math.max(shake,.4)}}else feint=0;
+ st+=((((awake&&!still)||Tm<8.4)?.35:1)-st)*.05;cen+=((still?1:0)-cen)*.05;standW+=(((awake&&!still)?0:1)-standW)*.045;
  const sp=clamp01(1-st*1.15);
  if(sPh>0){sPh-=dt*2.2;strike=Math.pow(Math.max(0,Math.sin(clamp01(1-sPh)*Math.PI)),.6);if(sPh<.55&&!fired){fired=true;emit=1}}else strike=0;
  const jt=still?.55+.4*strike+Math.sin(t*14)*.04:strike*.95;
@@ -150,10 +173,37 @@ s.up=(p,q,t,m,vel)=>{
  if(cen>.001){const ox=-P[NR*3]*cen,oy=(-.8-P[NR*3+1])*cen,oz=-P[NR*3+2]*cen;for(let i=0;i<M;i++){P[i*3]+=ox;P[i*3+1]+=oy;P[i*3+2]+=oz}}
  {const B=[[0,-.8,.42],[.12,-.35,.38],[.18,.15,.25],[.1,.7,.1],[-.1,1.15,.05],[-.3,1.48,.15],[-.55,1.52,.45],[-.85,1.45,.8]],V=[];
 for(let k=7;k>=0;k--){const h=k/7,b=B[k];V.push(new T.Vector3(b[0]+Math.sin(t*1.1+k*.8)*.05*h+m.x*.4*h*h,b[1]+cen*.15*h+Math.sin(t*.9)*.02*h-strike*.3*h*h,b[2]+strike*1.1*h*h+Math.sin(t*.7+k)*.03*h))}
-for(let n=1;n<=8;n++){const a=n*Math.PI/4,r=.42+.045*a;V.push(new T.Vector3(r*Math.sin(a),-.8-.035*a,r*Math.cos(a)))}
-V.push(new T.Vector3(-.45,-1.04,.95),new T.Vector3(-1,-1.05,.9),new T.Vector3(-1.6,-1.05,.7),new T.Vector3(-2.1,-1.02,.3),new T.Vector3(-2.4,-.98,-.3),new T.Vector3(-2.3,-.9,-.8));
+// two round coils of the tail
+for(let n=1;n<=16;n++){const a=n*Math.PI/4,r=.4+.015*a;V.push(new T.Vector3(r*Math.sin(a),-.8-.028*a,r*Math.cos(a)))}
+V.push(new T.Vector3(-.45,-1.15,.62),new T.Vector3(-1,-1.15,.55),new T.Vector3(-1.5,-1.12,.3),new T.Vector3(-1.85,-1.1,-.1));
 const cu=new T.CatmullRomCurve3(V,false,'centripetal');
 if(standW>.001)for(let i=0;i<M;i++){const c=cu.getPointAt(i/(M-1)),w=standW;P[i*3]+=(c.x-P[i*3])*w;P[i*3+1]+=(c.y-P[i*3+1])*w;P[i*3+2]+=(c.z-P[i*3+2])*w}}
+
+// ── intro: cobra slithers in on a sine path, coils round the text, constricts, crushes it, then rises onto its coils ──
+const hs=Math.min(1,2*cam.position.z*.4663*cam.aspect/7.8);TX.scale.setScalar(hs);
+const wv=1-sm01((Tm-9.7)/1.9);shM.opacity=sm01((Tm-10)/1.5)*.9;
+if(wv>.001){
+ const sq=sm01((Tm-8.2)/1.1),rho=(.55-.25*sq)*(1+.03*Math.sin(Tm*3)*(1-sq)),om=2.3+.8*sq,vx=.5-.1*sq,XS=1.5,ph=Tm*.25*(1-sq);
+ const G=d=>{if(d>=0)return 0;if(d<-1.6)return -d-.8;const t=(d+1.6)/1.6;return 1.6*((1-t)-(.5-(t*t*t-t*t*t*t/2)))};
+ for(let j=0;j<=300;j++){const d=-9+j*.06,u=sm01((d+1.6)/1.6),a=om*d+ph;
+  WX[j]=hs*(XS-vx*d+.9*G(d));
+  WY[j]=(1-u)*(.38*Math.sin(1.9*d)-.2)+u*rho*Math.sin(a);
+  WZ[j]=(1-u)*(rho+.18*Math.sin(1.9*d+1.3))+u*rho*Math.cos(a);
+  CA[j]=j?CA[j-1]+Math.hypot(WX[j]-WX[j-1],WY[j]-WY[j-1],WZ[j]-WZ[j-1]):0}
+ const e=clamp((Tm-1.8)/5.6),en=sm01(e)*.7+e*.3,hd=CA[152]+SEG*(M-1)-(1-en)*13;let j=300;
+ for(let i=0;i<M;i++){const ar=hd-i*SEG;while(j>1&&CA[j-1]>ar)j--;
+  const f=clamp((ar-CA[j-1])/((CA[j]-CA[j-1])||1)),k=i*3;
+  P[k]+=(WX[j-1]+(WX[j]-WX[j-1])*f-P[k])*wv;P[k+1]+=(WY[j-1]+(WY[j]-WY[j-1])*f-P[k+1])*wv;P[k+2]+=(WZ[j-1]+(WZ[j]-WZ[j-1])*f-P[k+2])*wv}}
+{const sq=sm01((Tm-8.2)/1.1);
+ L.forEach((g,k)=>{const e=sm01((Tm-.2-k*.07)/.8);g.visible=e>0&&Tm<9.3;
+  g.position.y=Math.sin(Tm*2.2+k*.6)*.04*(1-sq)+(1-e)*.6;g.rotation.y=(1-e)*6.28+Math.sin(Tm*1.5+k)*.12*(1-sq);g.rotation.z=sq*Math.sin(Tm*38+k*2)*.25;
+  g.scale.set(e*(1+.35*sq),e*(1-.8*sq)+.001,e)});
+ if(Tm>=9.3&&!bo){bo=1;shake=1;flash=.5;SND.init();SND.spit();
+  for(let k=0;k<DB;k++){const o=L[(Math.random()*L.length)|0];dp[k*3]=o.position.x+(Math.random()-.5)*.2;dp[k*3+1]=(Math.random()-.5)*.25;dp[k*3+2]=(Math.random()-.5)*.1;
+   dv[k*3]=(Math.random()-.5)*2.5;dv[k*3+1]=Math.random()*2+.3;dv[k*3+2]=(Math.random()-.2)*2.5}}
+ if(bo){for(let k=0;k<DB;k++){dp[k*3]+=dv[k*3]*dt;dp[k*3+1]+=dv[k*3+1]*dt;dp[k*3+2]+=dv[k*3+2]*dt;dv[k*3+1]-=dt*4}
+  dg.attributes.position.needsUpdate=true;dm.opacity=clamp(1-(Tm-9.3)/1.7);dm.visible=dm.opacity>0}}
+
 const flare=sm01(clamp01((st-.35)/.65))*(.55+.03*Math.sin(t*3));
  for(let i=0;i<M;i++){
   const ia=Math.max(i-1,0)*3,ib=Math.min(i+1,M-1)*3;
@@ -204,15 +254,18 @@ const flare=sm01(clamp01((st-.35)/.65))*(.55+.03*Math.sin(t*3));
   const fd=clamp(el[k]);ec[k*3]=.24*fd;ec[k*3+1]=fd;ec[k*3+2]=.62*fd}
  eg.attributes.position.needsUpdate=true;eg.attributes.color.needsUpdate=true;
  const free=0,face=m.x*.35;
- s.g.rotation.y=free+wrapPI(face-free)*st;s.g.rotation.x=(.35+m.y*.5)*(1-st)+(.1+m.y*.3)*st;
+ s.g.rotation.y=free+wrapPI(face-free)*st;s.g.rotation.x=(.35+m.y*.5)*(1-st)+(.1+m.y*.3)*st-.45*wv;
 };S.push(s);
 }
 
-// ── harness: mouse, tap, render loop ──
-const mouse={x:0,y:0};
+// ── harness: mouse, tap, scroll, render loop ──
+const mouse={x:0,y:0};let SCs=0;
 addEventListener('pointermove',e=>{mouse.x=e.clientX/innerWidth*2-1;mouse.y=e.clientY/innerHeight*2-1});
 cv.addEventListener('pointerdown',e=>{const s=S[0];SND.init();if(s.tap(e.clientX,e.clientY))s.hit()});
-S[0].g.scale.setScalar(1.25);S[0].g.position.y=-.1;const clock=new T.Clock();
+S[0].g.scale.setScalar(1.0);S[0].g.position.y=-.3;const clock=new T.Clock();
 (function loop(){requestAnimationFrame(loop);const t=clock.getElapsedTime();
+ // scrolling carries the cobra up and off the screen
+ const sc=clamp(scrollY/(innerHeight*1.2));SCs+=(sc-SCs)*.12;
+ S[0].g.position.y=-.3+SCs*cam.position.z*1.05;document.querySelector('.hud').style.opacity=1-SCs*2;document.getElementById('hint').style.opacity=(clamp((t-11.6)/1)*(1-clamp(SCs*10))).toFixed(2);
  S.forEach(s=>s.up(.5+.3*Math.sin(t*.1),0,t,mouse,0));shake*=.9;flash*=.93;cam.position.x=(Math.random()-.5)*.12*shake;cam.position.y=.2+(Math.random()-.5)*.12*shake;document.getElementById('fl').style.opacity=flash.toFixed(3);renderer.render(scene,cam)})();
 </script></body></html>
