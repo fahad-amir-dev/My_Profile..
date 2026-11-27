@@ -451,8 +451,11 @@
       padding-left: 22px;
       opacity: var(--w, 1);
       transform: translateY(calc((1 - var(--w, 1))*36px));
-      filter: blur(calc((1 - var(--w, 1))*6px));
-      transition: opacity .2s, transform .2s
+      will-change: opacity, transform
+    }
+
+    .panel.mv {
+      filter: blur(calc((1 - var(--w, 1))*6px))
     }
 
     .panel::before {
@@ -527,40 +530,33 @@
       color: var(--text)
     }
 
+    /* ── scroll-scrubbed reveals ──
+       JS sets --e (0 → 1) on every .panel = how far that section has scrolled in (1 = pinned).
+       Each piece starts and ends at fixed points of --e, so timing follows the scroll itself:
+       no timers, no delays, same result at any scroll speed, and it plays backwards on scroll up. */
     .js .w>span {
-      transform: translateY(115%) rotate(5deg);
-      transition: transform 1s var(--ease)
-    }
-
-    .js .panel.on .w>span {
-      transform: none
+      --p: clamp(0, calc((var(--e, 1) - .04 - var(--wi, 0)*.05)/.3), 1);
+      --q: calc(1 - (1 - var(--p))*(1 - var(--p))*(1 - var(--p)));
+      transform: translateY(calc((1 - var(--q))*115%)) rotate(calc((1 - var(--q))*5deg))
     }
 
     .js .panel>* {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity .9s ease calc(var(--i, 0)*.09s + .3s), transform .9s var(--ease) calc(var(--i, 0)*.09s + .3s)
+      --p: clamp(0, calc((var(--e, 1) - .06 - var(--i, 0)*.075)/.3), 1);
+      --q: calc(1 - (1 - var(--p))*(1 - var(--p))*(1 - var(--p)));
+      opacity: var(--q);
+      transform: translateY(calc((1 - var(--q))*20px))
     }
 
     .js .panel>h1,
-    .js .panel>h2 {
-      opacity: 1;
-      transform: none;
-      transition: none
-    }
-
-    .js .panel.on>* {
+    .js .panel>h2,
+    .js .panel>.tags,
+    .js .panel>.ck {
       opacity: 1;
       transform: none
     }
 
-    html.pre .panel.on .w>span {
-      transform: translateY(115%) rotate(5deg)
-    }
-
-    html.pre .panel.on>*:not(h1):not(h2) {
-      opacity: 0;
-      transform: translateY(20px)
+    .js .panel>.email-card {
+      transition: border-color .3s, background .3s
     }
 
     .tags {
@@ -588,34 +584,11 @@
     }
 
     .js .panel .tags span {
-      opacity: 0;
-      transform: translateY(10px) scale(.9);
-      transition: opacity .5s ease, transform .6s var(--spring), border-color .3s, color .3s, background .3s
-    }
-
-    .js .panel.on .tags span {
-      opacity: 1;
-      transform: none
-    }
-
-    .js .panel.on .tags span:nth-child(1) {
-      transition-delay: .9s
-    }
-
-    .js .panel.on .tags span:nth-child(2) {
-      transition-delay: 1s
-    }
-
-    .js .panel.on .tags span:nth-child(3) {
-      transition-delay: 1.1s
-    }
-
-    .js .panel.on .tags span:nth-child(4) {
-      transition-delay: 1.2s
-    }
-
-    .js .panel.on .tags span:nth-child(5) {
-      transition-delay: 1.3s
+      --p: clamp(0, calc((var(--e, 1) - .42 - var(--ti, 0)*.035)/.25), 1);
+      --b: calc(1 + 2.70158*(var(--p) - 1)*(var(--p) - 1)*(var(--p) - 1) + 1.70158*(var(--p) - 1)*(var(--p) - 1));
+      opacity: var(--p);
+      transform: translateY(calc((1 - var(--b))*10px)) scale(calc(.9 + .1*var(--b)));
+      transition: border-color .3s, color .3s, background .3s
     }
 
     .ck {
@@ -639,30 +612,10 @@
     }
 
     .js .panel .ck li {
-      opacity: 0;
-      transform: translateX(-18px);
-      transition: opacity .6s ease, transform .7s var(--ease)
-    }
-
-    .js .panel.on .ck li {
-      opacity: 1;
-      transform: none
-    }
-
-    .js .panel.on .ck li:nth-child(1) {
-      transition-delay: .55s
-    }
-
-    .js .panel.on .ck li:nth-child(2) {
-      transition-delay: .65s
-    }
-
-    .js .panel.on .ck li:nth-child(3) {
-      transition-delay: .75s
-    }
-
-    .js .panel.on .ck li:nth-child(4) {
-      transition-delay: .85s
+      --p: clamp(0, calc((var(--e, 1) - .3 - var(--ci, 0)*.04)/.3), 1);
+      --q: calc(1 - (1 - var(--p))*(1 - var(--p))*(1 - var(--p)));
+      opacity: var(--q);
+      transform: translateX(calc((1 - var(--q))*-18px))
     }
 
     .stats {
@@ -983,7 +936,7 @@
     .js .rv {
       opacity: 0;
       transform: translateY(44px) scale(.97);
-      transition: opacity .85s ease, transform .85s var(--ease)
+      transition: opacity .7s ease, transform .7s var(--ease)
     }
 
     .js .rv.v {
@@ -1524,6 +1477,10 @@
         -webkit-mask-image: linear-gradient(#000 88%, transparent);
         mask-image: linear-gradient(#000 88%, transparent)
       }
+
+      .panel.mv {
+        filter: none
+      }
     }
 
     @media(hover:none) {
@@ -1553,10 +1510,11 @@
     }
 
     /* ── overflow safety + contact section fix ── */
+    /* overflow-x stays on <body> only (set near the top). When <html> and <body> BOTH set it, <body> becomes a
+       scroll container and position:sticky stops pinning to the viewport. */
     html,
     body {
-      max-width: 100%;
-      overflow-x: hidden
+      max-width: 100%
     }
 
     h1,
@@ -1928,12 +1886,13 @@
           <p>Tell me what you need and I'll reply with ideas, a timeline and a clear price. No fluff.</p>
           <div class="email-card" id="emailCard" title="Click to copy email">
             <div class="email-icon">✉️</div>
-            <div class="email-text"><span class="email-addr">fahadamir.dev@gmail.com</span><span class="email-hint">click
+            <div class="email-text"><span class="email-addr">fahadamir.dev@gmail.com</span><span
+                class="email-hint">click
                 to copy address</span></div>
             <span class="email-copy" id="emailCopyLabel">copy</span>
           </div>
-          <div style="margin-top:24px"><a class="btn" href="snake.html">Send me an email</a><a
-              class="btn o" href="index.html">← Back to home</a></div>
+          <div style="margin-top:24px"><a class="btn" href="snake.html">Send me an email</a><a class="btn o"
+              href="index.html">← Back to home</a></div>
           <div class="foot">© 2026 M. Fahad Amir · <a href="#top" style="color:inherit">back to top ↑</a></div>
         </div>
       </div>
@@ -1951,7 +1910,8 @@
       const doc = document.documentElement, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, stackMQ = matchMedia('(max-aspect-ratio:1/1), (max-width:760px) and (min-height:521px)');
       const secs = [...document.querySelectorAll('.sec')], links = [...document.querySelectorAll('.nav ul a')], bar = document.getElementById('bar'), dotBox = document.getElementById('dots');
       const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), sm01 = x => { x = clamp(x); return x * x * (3 - 2 * x) }, ease = x => 1 - Math.pow(1 - clamp(x), 3);
-      const stick0 = secs[0].firstElementChild, getVH = () => stick0.offsetHeight || innerHeight;
+      const stick0 = secs[0].firstElementChild, panels = secs.map(s => s.querySelector('.panel')), n = secs.length;
+      const M = { offs: [], hts: [], vh: innerHeight, max: 1 }, getVH = () => M.vh;   // cached layout numbers, filled by measure()
 
       // mobile menu
       const tg = document.getElementById('navToggle'), menu = document.getElementById('navLinks');
@@ -1964,29 +1924,39 @@
       document.querySelectorAll('h1,.panel h2').forEach(h => {
         const lines = h.innerHTML.split(/<br\s*\/?>/i).map(l => { const d = document.createElement('div'); d.innerHTML = l; return d.textContent.trim() }); let wi = 0;
         h.setAttribute('aria-label', lines.join(' '));
-        h.innerHTML = lines.map(l => l.split(/\s+/).map(w => `<span class="w" aria-hidden="true"><span style="transition-delay:${wi++ * 70}ms">${w}</span></span>`).join(' ')).join('<br>');
+        h.innerHTML = lines.map(l => l.split(/\s+/).map(w => `<span class="w" aria-hidden="true"><span style="--wi:${wi++}">${w}</span></span>`).join(' ')).join('<br>');
       });
-      document.querySelectorAll('.panel').forEach(p => [...p.children].forEach((c, i) => c.style.setProperty('--i', i)));
+      document.querySelectorAll('.panel').forEach(p => {
+        [...p.children].forEach((c, i) => c.style.setProperty('--i', i));
+        p.querySelectorAll('.ck li').forEach((li, i) => li.style.setProperty('--ci', i));
+        p.querySelectorAll('.tags span').forEach((t, i) => t.style.setProperty('--ti', i));
+      });
 
       // counters
       const count = n => { if (n.dataset.d) return; n.dataset.d = 1; const end = +n.dataset.n, s = n.dataset.s || '', t0 = performance.now(); n.textContent = '0' + s; (function f(t) { const p = ease((t - t0) / 1400); n.textContent = Math.round(end * p) + s; if (p < 1) requestAnimationFrame(f) })(t0) };
 
-      // panel visibility
-      const io = new IntersectionObserver(es => es.forEach(e => { const pn = e.target.firstElementChild, vis = e.intersectionRatio > .3; pn.classList.toggle('on', vis); if (vis) pn.querySelectorAll('.cn').forEach(count) }), { threshold: [0, .3, .6, 1] });
-      document.querySelectorAll('.stick').forEach(s => io.observe(s));
-
-      // cards/labels reveal
-      const io2 = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; const el = e.target; el.classList.add('v'); io2.unobserve(el); setTimeout(() => { el.classList.remove('rv', 'v'); el.style.transitionDelay = '' }, 1300) }), { threshold: .15 });
-      document.querySelectorAll('.rv').forEach((el, i) => { el.style.transitionDelay = (i % 3) * 120 + 'ms'; io2.observe(el) });
+      // cards/labels reveal: starts when an element's top is ~10% inside the view; elements that arrive
+      // together are staggered, a lone element has no delay
+      const io2 = new IntersectionObserver(es => {
+        let k = 0;
+        es.forEach(e => {
+          if (!e.isIntersecting) return;
+          const el = e.target, d = k++ * 90; io2.unobserve(el);
+          el.style.transitionDelay = d + 'ms'; el.classList.add('v');
+          setTimeout(() => { el.classList.remove('rv', 'v'); el.style.transitionDelay = '' }, d + 850);
+        });
+      }, { threshold: 0, rootMargin: '0px 0px -20px 0px' });   // the hidden state sits 44px lower and the observer measures that shifted box, so only a small margin is left
+      document.querySelectorAll('.rv').forEach(el => io2.observe(el));
 
       // side dots
       const dots = secs.map(s => { const a = document.createElement('a'); a.href = '#' + s.id; const h = s.querySelector('h1,h2'); if (h) a.setAttribute('aria-label', h.getAttribute('aria-label') || h.textContent); dotBox.appendChild(a); return a });
 
-      addEventListener('mousemove', e => { document.body.style.setProperty('--mx', (e.clientX / innerWidth * 100) + '%'); document.body.style.setProperty('--my', (e.clientY / innerHeight * 100) + '%') });
+      let gx = 0, gy = 0, gq = false;   // spotlight position: at most one style write per frame
+      addEventListener('mousemove', e => { gx = e.clientX; gy = e.clientY; if (gq) return; gq = true; requestAnimationFrame(() => { gq = false; document.body.style.setProperty('--mx', (gx / innerWidth * 100).toFixed(1) + '%'); document.body.style.setProperty('--my', (gy / innerHeight * 100).toFixed(1) + '%') }) }, { passive: true });
 
       // loader
-      const ld = document.getElementById('ld'), hud = document.getElementById('hud'); let loaderDone = false;
-      const finishLoader = () => { if (loaderDone) return; loaderDone = true; ld.classList.add('out'); doc.classList.remove('pre'); setTimeout(() => ld.remove(), 1100) };
+      const ld = document.getElementById('ld'), hud = document.getElementById('hud'); let loaderDone = false, introE = reduce ? 1 : 0, introStart = -1;
+      const finishLoader = () => { if (loaderDone) return; loaderDone = true; ld.classList.add('out'); doc.classList.remove('pre'); introStart = performance.now() + 250; req(); setTimeout(() => ld.remove(), 1100) };
       if (reduce) { ld.remove(); doc.classList.remove('pre'); loaderDone = true }
       else {
         const minWait = new Promise(r => setTimeout(r, 900)), loaded = new Promise(r => document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }));
@@ -1998,7 +1968,7 @@
         const cur = document.getElementById('cur'), cd = document.getElementById('cd'); doc.classList.add('hc');
         let mx = innerWidth / 2, my = innerHeight / 2, cx = mx, cy = my;
         addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cd.style.transform = `translate(${mx}px,${my}px)` });
-        (function f() { cx += (mx - cx) * .15; cy += (my - cy) * .15; cur.style.transform = `translate(${cx}px,${cy}px)`; requestAnimationFrame(f) })();
+        (function f() { const dx = mx - cx, dy = my - cy; if (dx * dx + dy * dy > .01) { cx += dx * .15; cy += dy * .15; cur.style.transform = `translate(${cx}px,${cy}px)` } requestAnimationFrame(f) })();
         document.querySelectorAll('a,button,.card,.email-card').forEach(a => { a.addEventListener('mouseenter', () => cur.classList.add('big')); a.addEventListener('mouseleave', () => cur.classList.remove('big')) });
         document.querySelectorAll('.card').forEach(c => {
           c.addEventListener('mousemove', e => { const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; c.style.transform = `rotateX(${(.5 - y) * 14}deg) rotateY(${(x - .5) * 16}deg) translateY(-6px)`; c.style.setProperty('--cx', x * 100 + '%'); c.style.setProperty('--cy', y * 100 + '%') });
@@ -2016,20 +1986,54 @@
         navigator.clipboard.writeText('fahadamir852@gmail.com').then(() => { copyLabel.textContent = '✓ copied!'; copyLabel.style.color = 'var(--green)'; setTimeout(() => { copyLabel.textContent = 'copy'; copyLabel.style.color = '' }, 2000) }).catch(() => { copyLabel.textContent = 'failed'; setTimeout(() => { copyLabel.textContent = 'copy' }, 2000) });
       });
 
-      // scroll state
-      let y = scrollY, prog = 0, active = 0;
-      const onScroll = () => {
-        y = scrollY; const vh = getVH(), max = doc.scrollHeight - innerHeight; prog = max > 0 ? clamp(y / max) : 0;
-        bar.style.transform = 'scaleX(' + prog + ')';
-        secs.forEach((s, i) => { const r = s.getBoundingClientRect(); if (!reduce) s.style.setProperty('--w', sm01(Math.min(1 - r.top / vh, r.bottom / vh)).toFixed(3)); if (r.top <= innerHeight * .5 && r.bottom > innerHeight * .5) active = i });
-        const nm = secs[active].dataset.nav;
-        links.forEach(a => a.classList.toggle('on', a.textContent.trim() === nm));
-        dots.forEach((d, i) => d.classList.toggle('on', i === active));
-        hud.innerHTML = `<span><b>${String(active + 1).padStart(2, '0')}</b> / ${String(secs.length).padStart(2, '0')}</span><span>${nm}</span>`;
+      // ── scroll engine ──
+      // One rAF-batched update. Layout is measured once (and again on resize / content change), a scroll event
+      // only reads scrollY, and the DOM is written only when a value really changed.
+      // The same secW() drives the 3D scenes, so text and 3D fade at exactly the same scroll positions.
+      let y = scrollY, prog = 0, active = -1, ticking = false, cDone = false;
+      const cw = new Array(n).fill(-1), ce = new Array(n).fill(-1), cmv = new Array(n).fill(false);
+      const secW = (i, top) => sm01(Math.min(1 - top / M.vh, i === n - 1 ? 1 : (top + M.hts[i]) / M.vh));
+      const req = () => { if (!ticking) { ticking = true; requestAnimationFrame(update) } };
+      const measure = () => {
+        const sy = scrollY, rs = secs.map(s => s.getBoundingClientRect());
+        M.vh = stick0.getBoundingClientRect().height || innerHeight;
+        M.offs = rs.map(r => r.top + sy); M.hts = rs.map(r => r.height);
+        M.max = Math.max(doc.scrollHeight - innerHeight, 1);
+        req();
       };
-      addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll);
-      addEventListener('load', () => { onScroll(); requestAnimationFrame(onScroll); setTimeout(onScroll, 300) });
-      addEventListener('pageshow', onScroll); onScroll();
+      const update = () => {
+        ticking = false;
+        y = scrollY; const vh = M.vh, half = innerHeight * .5;
+        if (introStart >= 0 && introE < 1) introE = clamp((performance.now() - introStart) / 1300);
+        prog = clamp(y / M.max);
+        bar.style.transform = 'scaleX(' + prog.toFixed(4) + ')';
+        let act = active;
+        for (let i = 0; i < n; i++) {
+          const top = M.offs[i] - y;
+          if (top <= half && top + M.hts[i] > half) act = i;
+          let e = clamp(1 - top / vh); if (i === 0) e = Math.min(e, introE);        // --e: entrance progress 0 → 1 (1 = pinned)
+          if (i === 0 && !cDone && e > .5) { cDone = true; panels[0].querySelectorAll('.cn').forEach(count) }
+          if (reduce) continue;
+          const w = Math.round(secW(i, top) * 1000) / 1000, ev = Math.round(e * 1000) / 1000, pn = panels[i];   // --w: panel fade in/out
+          if (w !== cw[i]) { cw[i] = w; pn.style.setProperty('--w', w); const mv = w > 0 && w < 1; if (mv !== cmv[i]) { cmv[i] = mv; pn.classList.toggle('mv', mv) } }
+          if (ev !== ce[i]) { ce[i] = ev; pn.style.setProperty('--e', ev) }
+        }
+        if (act !== active) {
+          active = act; const nm = secs[act].dataset.nav;
+          links.forEach(a => a.classList.toggle('on', a.textContent.trim() === nm));
+          dots.forEach((d, i) => d.classList.toggle('on', i === act));
+          hud.innerHTML = `<span><b>${String(act + 1).padStart(2, '0')}</b> / ${String(n).padStart(2, '0')}</span><span>${nm}</span>`;
+        }
+        if (introStart >= 0 && introE < 1) req();      // keep going until the hero intro has finished
+      };
+      addEventListener('scroll', req, { passive: true });
+      addEventListener('resize', measure);
+      addEventListener('orientationchange', () => setTimeout(measure, 250));
+      addEventListener('load', () => { measure(); setTimeout(measure, 300) });
+      addEventListener('pageshow', measure);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+      if (window.ResizeObserver) new ResizeObserver(measure).observe(document.querySelector('main'));
+      measure(); update();
 
       if (reduce) return;
 
@@ -2482,8 +2486,7 @@
         S.forEach(s => s.g.traverse(o => { o.frustumCulled = false }));
         S.forEach((s, i) => { s.side = secs[i].classList.contains('r') ? 1 : -1; s.base = 1; s.by = 0; s.mul = s.mul || 1; s.g.visible = false });
 
-        let offs = [], hts = [], LS = []; const L0 = { tx: 3.3, ty: 0, ts: 1 }, panelsEl = secs.map(s => s.querySelector('.panel'));
-        const measure = () => { offs = secs.map(s => s.offsetTop); hts = secs.map(s => s.offsetHeight) };
+        let LS = []; const L0 = { tx: 3.3, ty: 0, ts: 1 }, panelsEl = secs.map(s => s.querySelector('.panel'));
         const layout = () => {
           const W = innerWidth, H = innerHeight, vh = getVH();
           renderer.setSize(W, H, false); cam.aspect = W / H; cam.updateProjectionMatrix();
@@ -2505,37 +2508,40 @@
         addEventListener('resize', relayout); addEventListener('orientationchange', () => setTimeout(layout, 250)); addEventListener('load', layout);
         if (window.visualViewport) visualViewport.addEventListener('resize', relayout);
         if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
-        if (window.ResizeObserver) { new ResizeObserver(measure).observe(document.querySelector('main')); const ro = new ResizeObserver(relayout); panelsEl.forEach(p => p && ro.observe(p)) }
+        if (window.ResizeObserver) { const ro = new ResizeObserver(relayout); panelsEl.forEach(p => p && ro.observe(p)) }
         layout();
 
         const m = { x: 0, y: 0, sx: 0, sy: 0 };
         addEventListener('click', e => { if (e.target.closest && e.target.closest('a,button,.email-card')) return; if (S[3].g.visible && S[3].tap(e.clientX, e.clientY)) S[3].hit() });
         addEventListener('mousemove', e => { m.x = e.clientX / innerWidth - .5; m.y = e.clientY / innerHeight - .5 });
 
-        let sm = y, last = y, vs = 0;
+        let sm = scrollY, last = sm, vs = 0, prevMs = 0;
         (function loop(ms) {
           requestAnimationFrame(loop);
-          const t = ms * .001, vh = getVH();
-          sm += (y - sm) * .09; vs += (Math.min(Math.abs(sm - last) / 40, 1.4) - vs) * .08; last = sm;
-          m.sx += (m.x - m.sx) * .06; m.sy += (m.y - m.sy) * .06;
+          const t = ms * .001, vh = getVH(), ry = scrollY;
+          // smoothing is time based, so it feels the same on 60 / 120 / 144 Hz screens
+          const dt = Math.min(Math.max((ms - prevMs) / 16.667, 0), 3); prevMs = ms;
+          const k9 = 1 - Math.pow(.91, dt), k8 = 1 - Math.pow(.92, dt), k6 = 1 - Math.pow(.94, dt), k5 = 1 - Math.pow(.95, dt);
+          sm += (ry - sm) * k9; vs += (Math.min(dt > 0 ? Math.abs(sm - last) / dt / 40 : 0, 1.4) - vs) * k8; last = sm;
+          m.sx += (m.x - m.sx) * k6; m.sy += (m.y - m.sy) * k6;
           const mm = { x: m.sx, y: m.sy };
           S.forEach((s, i) => {
-            const top = offs[i] - sm, h = hts[i], w = sm01(Math.min(1 - top / vh, (top + h) / vh));
+            const top = M.offs[i] - sm, h = M.hts[i], w = secW(i, M.offs[i] - ry);   // fade follows the real scroll (same as the text); motion stays smoothed
             s.g.visible = w > .004; if (!s.g.visible) { if (s.off) s.off(); return }
             const q = clamp((vh - top) / (h + vh)), p = h - vh > 1 ? clamp(-top / (h - vh)) : clamp(1 - top / vh);
             s.mats.forEach(([mt, b]) => { mt.opacity = b * w });
             const Li = LS[i] || L0;
-            s.g.position.x += (s.side * Li.tx - s.g.position.x) * .08; s.by += (Li.ty - s.by) * .08;
+            s.g.position.x += (s.side * Li.tx - s.g.position.x) * k8; s.by += (Li.ty - s.by) * k8;
             s.g.position.y = s.by + (top > 0 ? -1 : 1) * (1 - w) * 2.2; s.g.position.z = -(1 - w) * 3;
-            s.base += (Li.ts * (s.fit || 1) - s.base) * .08; s.g.scale.setScalar(s.base * s.mul);
+            s.base += (Li.ts * (s.fit || 1) - s.base) * k8; s.g.scale.setScalar(s.base * s.mul);
             s.up(p, q, t, mm, vs);
           });
           dust.rotation.y = t * .02 + sm * .0004; dust.rotation.x = sm * .0002; dust.position.y = (sm * .003) % 4 - 2;
           cam.position.z = 8 - prog * 1.2 - vs * .6;
-          cam.position.x += (m.x * .8 - cam.position.x) * .05; cam.position.y += (-m.y * .6 - cam.position.y) * .05;
+          cam.position.x += (m.x * .8 - cam.position.x) * k5; cam.position.y += (-m.y * .6 - cam.position.y) * k5;
           cam.up.set(Math.sin(prog * 6.28) * .07 + (m.x * .03), 1, 0);
           sss.forEach((a, i) => { a.l += .012; if (a.l > 1) { a.l = -Math.random() * 4; a.x = (Math.random() - .2) * 18; a.y = Math.random() * 8 - 1; a.z = -6 - Math.random() * 6 } const h = Math.max(a.l, 0), x = a.x - h * 9, y = a.y - h * 4; ssp.set(a.l > 0 ? [x, y, a.z, x + 1.6, y + .7, a.z] : [0, 0, 0, 0, 0, 0], i * 6) }); ssg.attributes.position.needsUpdate = true;
-          cam.fov = 55 + vs * 9; cam.updateProjectionMatrix();
+          const fv = 55 + vs * 9; if (Math.abs(fv - cam.fov) > .005) { cam.fov = fv; cam.updateProjectionMatrix() }
           cam.lookAt(0, 0, 0);
           if (sndBtn) { const sh = S[3].g.visible && S[3].mats[0][0].opacity > .3; if (sh !== sndShown) { sndShown = sh; sndBtn.classList.toggle('show', sh) } }
           renderer.render(scene, cam);
