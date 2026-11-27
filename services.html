@@ -1891,7 +1891,7 @@
                 to copy address</span></div>
             <span class="email-copy" id="emailCopyLabel">copy</span>
           </div>
-          <div style="margin-top:24px"><a class="btn" href="snake.html">Send me an email</a><a class="btn o"
+          <div style="margin-top:24px"><a class="btn" href="#">Send me an email</a><a class="btn o"
               href="index.html">← Back to home</a></div>
           <div class="foot">© 2026 M. Fahad Amir · <a href="#top" style="color:inherit">back to top ↑</a></div>
         </div>
@@ -2206,7 +2206,7 @@
           for (let i = 0; i < G; i++)for (let j = 0; j < G; j++) { const k = (i * G + j) * 3; base[k] = (i / (G - 1) - .5) * 6.4; base[k + 2] = (j / (G - 1) - .5) * 6.4 }
           pa.set(base); const pg = new T.BufferGeometry(); pg.setAttribute('position', new T.BufferAttribute(pa, 3)); pg.setAttribute('color', new T.BufferAttribute(ca, 3));
           const pm = s.pm(.9, .045); pm.color.set(0xffffff); pm.vertexColors = true;
-          s.g.add(new T.Points(pg, pm), new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(6.6, .02, 6.6)), s.lm(.5)));
+          s.g.add(new T.Points(pg, pm));
           s.up = (p, q, t, m, vel) => {
             const amp = (1.1 + vel * .8) * (1 - ease(p * 1.2) * .8), a = pg.attributes.position.array, px = m.x * 12, pz = m.y * 12;
             for (let i = 0; i < n; i++) {
@@ -2261,7 +2261,7 @@
             }
             const t2 = new T.CanvasTexture(c); t2.wrapS = t2.wrapT = T.RepeatWrapping; t2.anisotropy = 4; return t2
           })();
-          const M = 170, R = 16, SEG = .046, NR = 46, VN = M * (R + 1), IH = 5, HC = 22;
+          const M = 170, R = 16, SEG = .046, NR = 46, VN = M * (R + 1), IH = 5, HC = 22, FAT = 1.3;
           const pos = new Float32Array(VN * 3), nor = new Float32Array(VN * 3), col = new Float32Array(VN * 3), col0 = new Float32Array(VN * 3), dw = new Float32Array(VN), uv = new Float32Array(VN * 2), idx = [];
           const RX = new Float32Array(M), RY = new Float32Array(M), HW = new Float32Array(M), cosT = [], sinT = [];
           for (let j = 0; j <= R; j++) { const a = j / R * Math.PI * 2; cosT.push(Math.cos(a)); sinT.push(Math.sin(a)) }
@@ -2270,7 +2270,7 @@
             const f = i / (M - 1), hb = Math.exp(-Math.pow((f - .04) / .03, 2)), nk = Math.exp(-Math.pow((f - .09) / .025, 2)), hw = Math.exp(-Math.pow((i - HC) / 6.5, 2));
             const taper = Math.pow(Math.max(0, 1 - Math.max(0, (f - .72) / .28)), .9);
             const cap = Math.sqrt(clamp01(f / .025)) * Math.sqrt(clamp01((1 - f) / .02));
-            const r = .178 * (.72 + .28 * sm01(f / .22)) * taper * (1 + .12 * hb) * (1 - .2 * nk) * cap + .002;
+            const r = .178 * FAT * (.72 + .28 * sm01(f / .22)) * taper * (1 + .12 * hb) * (1 - .2 * nk) * cap + .002;
             RX[i] = r * (1 + .85 * hb); RY[i] = r * (1 - .18 * hb); HW[i] = hw;
             cb.copy(cHead).lerp(cTail, clamp01(f * 1.3));
             for (let j = 0; j <= R; j++) {
@@ -2297,7 +2297,7 @@
           s.mats.push([bmat, 1]); const bodyM = new T.Mesh(bg, bmat); bodyM.frustumCulled = false; bg.boundingSphere = new T.Sphere(new T.Vector3(), 100); s.g.add(bodyM);
           const amb = new T.AmbientLight(0xa09a8a, .75), dl = new T.DirectionalLight(0xffffff, 1.05), pl1 = new T.PointLight(0xbfcfe0, .4), pl2 = new T.PointLight(0xffe2c0, .5);
           dl.position.set(2, 4, 5); pl1.position.set(-4, -2, 3); pl2.position.set(4, -3, -2); scene.add(amb, dl, pl1, pl2);
-          const hdG = new T.Group(); s.g.add(hdG); hdG.scale.setScalar(1.15);
+          const hdG = new T.Group(); s.g.add(hdG); hdG.scale.setScalar(1.15 * FAT);
           const darkM = new T.MeshStandardMaterial({ color: 0x101a0c, roughness: .4, metalness: .2, transparent: true });
           const mouthM = new T.MeshBasicMaterial({ color: 0x7a0a14, transparent: true });
           const fangM = new T.MeshStandardMaterial({ color: 0xfffbe0, emissive: 0xcfe8a0, emissiveIntensity: .1, roughness: .2, transparent: true });
@@ -2313,7 +2313,7 @@
             const ball = new T.Mesh(new T.SphereGeometry(.03, 14, 12), em), pup = new T.Mesh(new T.SphereGeometry(.034, 12, 10), pm2), glow = new T.Mesh(new T.SphereGeometry(.045, 10, 8), hm);
             pup.scale.set(.13, 1.05, .6); pup.position.set(sg * .022, 0, .008);
             const brow = new T.Mesh(new T.SphereGeometry(1, 10, 8), darkM); brow.scale.set(.105, .036, .115); brow.position.set(0, .034, .005); brow.rotation.z = sg * .65;
-            g.add(ball, pup, glow, brow); g.position.set(sg * RX[IH] * .92 / 1.15, RY[IH] * .3 / 1.15, .03); hdG.add(g); return g
+            g.add(ball, pup, glow, brow); g.position.set(sg * RX[IH] * .92 / (1.15 * FAT), RY[IH] * .3 / (1.15 * FAT), .03); hdG.add(g); return g
           });
           eyes.forEach((g, ix) => { // eyelid + highlight (highlight material is registered so it fades with the section)
             const sg = ix ? 1 : -1, lid = new T.Mesh(new T.SphereGeometry(.034, 12, 8), darkM), hlM = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .85 }), hl = new T.Mesh(new T.SphereGeometry(.006, 8, 6), hlM);
@@ -2330,7 +2330,7 @@
           const P = new Float32Array(M * 3), v3x = new T.Vector3(), v3y = new T.Vector3(), v3z = new T.Vector3(), mx4 = new T.Matrix4(), HF = new Float32Array(9), H0 = new Float32Array(9);
           let lkx = 0, lky = 0, lvx = 0, lvy = 0, al = 0, alT = 0; const qL = new T.Quaternion(), eL = new T.Euler(), qB = new T.Quaternion(), qW = new T.Quaternion();
           let SX = 0, VX = 0, PH = 0, DD = 0, away = false, dirty = false, shake = 0, flash = 0, lfo = 0, cjx = 0, cjy = 0;
-          let intro = 0, standW = 1, accA = 0, pulse = 0, st = 1, lastT = 0, sPh = 0, strike = 0, awake = false, fired = false, emit = 0, seq = -1, spitsDone = 0, capture = false, frozen = 0, hold = 0, cen = 0, jaw = 0, drip = 0, feint = 0;
+          let rest = 0, intro = 0, standW = 1, accA = 0, pulse = 0, st = 1, lastT = 0, sPh = 0, strike = 0, awake = false, fired = false, emit = 0, seq = -1, spitsDone = 0, capture = false, frozen = 0, hold = 0, cen = 0, jaw = 0, drip = 0, feint = 0;
           const NV = 70, vp = new Float32Array(NV * 3).fill(1e4), vv = new Float32Array(NV * 3), vl = new Float32Array(NV), vg = new T.BufferGeometry();
           vg.setAttribute('position', new T.BufferAttribute(vp, 3)); const vpm = s.pm(.7, .04); vpm.color.set(0xc8ff3a); { const vP = new T.Points(vg, vpm); vP.frustumCulled = false; s.g.add(vP) }
 
@@ -2341,14 +2341,14 @@
             if (TS[i] === ' ') continue;
             const mc = () => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); x.font = '900 96px system-ui,Arial,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; return [c, x] };
             const [c, x] = mc(), [c2, x2] = mc(); x.fillStyle = '#fff'; x.fillText(TS[i], 64, 68);
-            const gr = x2.createLinearGradient(0, 20, 0, 110); gr.addColorStop(0, '#fff6c9'); gr.addColorStop(.5, '#f2b630'); gr.addColorStop(1, '#a8650b');
-            x2.lineWidth = 6; x2.lineJoin = 'round'; x2.strokeStyle = '#5a3306'; x2.strokeText(TS[i], 64, 68); x2.fillStyle = gr; x2.fillText(TS[i], 64, 68);
+            const gr = x2.createLinearGradient(0, 20, 0, 110); gr.addColorStop(0, '#eafffa'); gr.addColorStop(.5, '#5ee9ff'); gr.addColorStop(1, '#3dff9e');
+            x2.lineWidth = 6; x2.lineJoin = 'round'; x2.strokeStyle = '#06323c'; x2.strokeText(TS[i], 64, 68); x2.fillStyle = gr; x2.fillText(TS[i], 64, 68);
             const tx = new T.CanvasTexture(c), ft = new T.CanvasTexture(c2), g = new T.Group();
-            for (let l = 0; l < 8; l++) { const fr = l === 7, m = new T.Mesh(PG, new T.MeshBasicMaterial({ map: fr ? ft : tx, alphaTest: .45, color: fr ? 0xffffff : new T.Color(0x4a2c06).lerp(new T.Color(0xb9791a), l / 6) })); m.position.z = (l - 7) * .011; g.add(m) }
+            for (let l = 0; l < 8; l++) { const fr = l === 7, m = new T.Mesh(PG, new T.MeshBasicMaterial({ map: fr ? ft : tx, alphaTest: .45, color: fr ? 0xffffff : new T.Color(0x06323c).lerp(new T.Color(0x2fd9c8), l / 6) })); m.position.z = (l - 7) * .011; g.add(m) }
             g.position.x = (i - (TS.length - 1) / 2) * ADV; TX.add(g); L.push(g)
           }
           const DB = 360, dp = new Float32Array(DB * 3).fill(1e4), dv = new Float32Array(DB * 3), dg = new T.BufferGeometry();
-          dg.setAttribute('position', new T.BufferAttribute(dp, 3)); const dm = s.pm(1, .05); dm.color.set(0xffd25a); { const dP = new T.Points(dg, dm); dP.frustumCulled = false; TX.add(dP) } let bo = 0;
+          dg.setAttribute('position', new T.BufferAttribute(dp, 3)); const dm = s.pm(1, .05); dm.color.set(0x5ee9ff); { const dP = new T.Points(dg, dm); dP.frustumCulled = false; TX.add(dP) } let bo = 0;
           const WX = new Float32Array(301), WY = new Float32Array(301), WZ = new Float32Array(301), CA = new Float32Array(301);
           const sc2 = document.createElement('canvas'); sc2.width = sc2.height = 128; { const x = sc2.getContext('2d'), g = x.createRadialGradient(64, 64, 4, 64, 64, 62); g.addColorStop(0, 'rgba(0,0,0,.7)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128) }
           const shM = new T.MeshBasicMaterial({ map: new T.CanvasTexture(sc2), transparent: true, opacity: 0, depthWrite: false }), shP = new T.Mesh(new T.PlaneGeometry(3.6, 3.6), shM); shP.rotation.x = -Math.PI / 2; shP.position.set(-.2 + XO, -1.3 + YO, 0); shP.renderOrder = -1; s.g.add(shP); s.mats.push([shM, 1]);
@@ -2358,21 +2358,24 @@
           // section left the screen: reset everything (intro replays on the next visit), restore camera
           s.off = () => {
             if (!dirty) return; dirty = false;
-            awake = false; seq = -1; sPh = 0; st = 1; cen = 0; hold = 0; jaw = 0; feint = 0; al = 0; alT = 0; intro = 0; standW = 1; bo = 0;
+            awake = false; rest = 0; seq = -1; sPh = 0; st = 1; cen = 0; hold = 0; jaw = 0; feint = 0; al = 0; alT = 0; intro = 0; standW = 1; bo = 0;
             SX = 0; VX = 0; PH = 0; DD = 0; away = false; s.mv = false; lkx = lky = lvx = lvy = 0; vl.fill(0); dp.fill(1e4); dg.attributes.position.needsUpdate = true; dm.visible = true;
             cam.position.x -= cjx; cam.position.y -= cjy; cjx = cjy = 0; shake = 0; flash = 0; lfo = 0; fl.style.opacity = 0; SND.slither(false)
           };
           s.tap = (x, y) => { s.g.updateMatrixWorld(true); const thr = Math.max(46, 80 * Math.min(1, s.base || 1)); for (let i = 0; i < M; i += 3) { v3x.set(P[i * 3], P[i * 3 + 1], P[i * 3 + 2]).applyMatrix4(s.g.matrixWorld).project(cam); if (Math.hypot((v3x.x * .5 + .5) * innerWidth - x, (-v3x.y * .5 + .5) * innerHeight - y) < thr) return true } return false };
           const wrapPI = x => Math.atan2(Math.sin(x), Math.cos(x));
-          s.mul = .78; s.fit = 1.28;   // layout() sets fit (1.28 / 1.12): .78 × that ≈ the nominal box the original layout reserves
+          // resting pose: neck (base → head) lowered onto the ground in front of the coil
+          const BR = [[0, -.8, .42], [.03, -.7, .6], [.08, -.62, .85], [.16, -.74, 1.1], [.22, -.98, 1.18], [.34, -1.1, 1.4], [.52, -1.15, 1.55], [.72, -1.15, 1.68]];
+          s.mul = .88; s.fit = 1.28;   // layout() sets fit (1.28 / 1.12): .78 × that ≈ the nominal box the original layout reserves
           s.up = (pIn, q, t, m, vel) => {
             const dt = clamp(t - lastT, 0, .05); lastT = t; dirty = true;
             const wf = shM.opacity, p = .5 + .3 * Math.sin(t * .1), mon = Math.abs(m.x) + Math.abs(m.y) > 1e-4;   // wf = section fade (set by the loop); mon = a real mouse exists
             // scroll sync: the portfolio's pinned progress (pIn) replaces the old wheel/touch "away" trigger; once the intro is over
+            { const rT = (intro > 9.4 && seq < 0 && Math.abs(SX) < .02) ? 1 - sm01((pIn - .3) / .28) : 0; rest += (rT - rest) * Math.min(1, dt * 4) }   // curled while the section is pinned, uncurls with scroll progress
             if (intro > 11.6) {
-              if (pIn > .6) away = true; else if (pIn < .4) away = false;
+              if (pIn > .38) away = true; else if (pIn < .3) away = false;
               const E = s.base * s.mul, off = Math.max(6, (cam.position.z * .5206 * cam.aspect - Math.abs(s.g.position.x)) / E + 7.6);
-              const tgt = away ? -off : 0, phT = away ? Math.PI : 0, d = tgt - SX, need = Math.abs(d) > .02, low = standW < .15;
+              const tgt = away ? -off : 0, phT = away ? Math.PI : 0, d = tgt - SX, need = Math.abs(d) > .02, low = standW < .15 && rest < .12;
               if (!away && SX < -(off - .15)) PH = 0; else PH += (phT - PH) * Math.min(1, dt * 3.2);
               if (!s.mv && standW > .95) PH = Math.PI;
               const vt = need && low ? Math.sign(d) * 4.2 * (.3 + .7 * clamp(Math.abs(d) / 2)) * Math.max(0, Math.cos(PH - phT)) : 0;
@@ -2387,7 +2390,7 @@
               if (seq >= 4.4) { seq = -1; SND.hiss() }
             }
             awake = !!s.mv; intro += dt; const Tm = intro;
-            if (!still) { feint += dt; if (feint > (awake ? 2.2 : 1.6) + Math.sin(t * 1.3) * .6 && sPh <= 0 && Tm > 11.6 && !s.mv) { feint = 0; sPh = 1; fired = true; shake = Math.max(shake, .4) } } else feint = 0;
+            if (!still) { feint += dt; if (feint > (awake ? 2.2 : 1.6) + Math.sin(t * 1.3) * .6 && sPh <= 0 && Tm > 11.6 && !s.mv && rest < .3) { feint = 0; sPh = 1; fired = true; shake = Math.max(shake, .4) } } else feint = 0;
             st += ((((awake && !still) || Tm < 8.4) ? .35 : 1) - st) * .05; cen += ((still ? 1 : 0) - cen) * .05; standW += (((awake && !still) ? 0 : 1) - standW) * .045;
             const sp = clamp01(1 - st * 1.15);
             if (sPh > 0) { sPh -= dt * 2.2; strike = Math.pow(Math.max(0, Math.sin(clamp01(1 - sPh) * Math.PI)), .6); if (sPh < .55 && !fired) { fired = true; emit = 1 } } else strike = 0;
@@ -2421,6 +2424,13 @@
               for (let k = 7; k >= 0; k--) { const h = k / 7, b = B[k]; V.push(new T.Vector3(b[0] + Math.sin(t * 1.1 + k * .8) * .05 * h + lkx * .5 * h * h, b[1] + cen * .15 * h + Math.sin(t * .9) * .02 * h - strike * .3 * h * h, b[2] + (strike * 1.1 + lky * .3 - al * .18) * h * h + Math.sin(t * .7 + k) * .03 * h)) }
               for (let n = 1; n <= 16; n++) { const a = n * Math.PI / 4, r = .4 + .015 * a; V.push(new T.Vector3(r * Math.sin(a), -.8 - .028 * a, r * Math.cos(a))) }
               V.push(new T.Vector3(-.45, -1.15, .62), new T.Vector3(-1, -1.15, .55), new T.Vector3(-1.5, -1.12, .3), new T.Vector3(-1.85, -1.1, -.1));
+              if (rest > .001) {
+                const rk = sm01(rest), bh = Math.sin(t * 1.3) * .012, RV = [];
+                for (let k = 7; k >= 0; k--) { const b = BR[k]; RV.push(new T.Vector3(b[0], b[1] + bh * k / 7, b[2])) }
+                for (let n = 1; n <= 16; n++) { const a = n * Math.PI / 4, r = .42 + .028 * a; RV.push(new T.Vector3(r * Math.sin(a), -.8 - .028 * a, r * Math.cos(a))) }
+                for (let k = 0; k < 4; k++) { const a = Math.PI / 3 + k * 1.4; RV.push(new T.Vector3(.95 * Math.sin(a), -1.12, .95 * Math.cos(a))) }   // tail wraps round the outside of the coil
+                for (let i = 0; i < V.length; i++) V[i].lerp(RV[i], rk);
+              }
               const cu = new T.CatmullRomCurve3(V, false, 'centripetal');
               const tw = 1 - standW;
               if (tw > .001) {
@@ -2475,7 +2485,7 @@
             // placement inside the group: slither offset (SX), vertical centring (YO); the layout code positions/scales the group itself
             for (let i = 0; i < M; i++) { P[i * 3] += SX; P[i * 3 + 1] += YO } shP.position.x = -.2 + XO + SX;
 
-            const flare = sm01(clamp01((st - .35) / .65)) * (.55 + .03 * Math.sin(t * 3)) * (1 + .3 * al + .04 * al * Math.sin(t * 5));
+            const flare = sm01(clamp01((st - .35) / .65)) * (.55 + .03 * Math.sin(t * 3)) * (1 + .3 * al + .04 * al * Math.sin(t * 5)) * (1 - .92 * sm01(rest));
             for (let i = 0; i < M; i++) {
               const ia = Math.max(i - 1, 0) * 3, ib = Math.min(i + 1, M - 1) * 3;
               let fx = P[ia] - P[ib], fy = P[ia + 1] - P[ib + 1], fz = P[ia + 2] - P[ib + 2]; const fl2 = Math.hypot(fx, fy, fz) || 1; fx /= fl2; fy /= fl2; fz /= fl2;
@@ -2502,7 +2512,7 @@
               v3x.set(P[IH * 3], P[IH * 3 + 1], P[IH * 3 + 2]).applyMatrix4(s.g.matrixWorld).project(cam);
               const dx = (m.x + .5) * innerWidth - (v3x.x * .5 + .5) * innerWidth, dy = (m.y + .5) * innerHeight - (-v3x.y * .5 + .5) * innerHeight,
                 AREA = Math.max(260, Math.min(innerWidth, innerHeight) * .65), R = Math.hypot(dx, dy),
-                on = mon && !s.mv && !still && standW > .9 && Tm > 11.6 && R < AREA, near = on && R < AREA * .45;
+                on = mon && !s.mv && !still && standW > .9 && Tm > 11.6 && rest < .6 && R < AREA, near = on && R < AREA * .45;
               alT -= dt; al += ((near ? 1 : 0) - al) * Math.min(1, dt * (near ? 4 : 1.5));
               if (near && alT <= 0) { alT = 6; lvy -= 2.4; SND.hiss() }
               const txx = on ? clamp(dx / AREA * 1.4, -1, 1) * .72 + Math.sin(t * 2.6) * .07 * al + Math.sin(t * 17) * .012 * al : 0, tyy = on ? clamp(dy / AREA * 1.4, -1, 1) * .38 + .1 * al : 0;
@@ -2515,7 +2525,7 @@
             eyes.forEach((g, ix) => { g.scale.setScalar(1 + strike * .12 + al * .06); g.rotation.set(lky * .25 + Math.sin(t * 1.7 + ix) * .03, lkx * .3, 0); g.children[3].rotation.z = (ix ? 1 : -1) * (.65 + .3 * al); g.children[3].position.y = .034 - .008 * al; g.children[4].position.y = .026 - .011 * al - strike * .006; g.children[2].material.opacity = al * .3 * wf });
             const ph = (t * (1.1 + st * 1.1 + strike * 4 + al * 1.6)) % 1, fk = ph < .32 ? Math.sin(ph / .32 * Math.PI) : 0;
             v3x.set(H0[3], H0[4], H0[5]); v3y.set(H0[6], H0[7], H0[8]); v3z.set(H0[0], H0[1], H0[2]); mx4.makeBasis(v3x, v3y, v3z);
-            tgG.quaternion.setFromRotationMatrix(mx4); tgG.position.set(P[0] + H0[0] * .01, P[1] + H0[1] * .01, P[2] + H0[2] * .01); tgG.scale.set(1, 1, Math.max(fk, .001)); tgG.visible = fk > .02;
+            tgG.quaternion.setFromRotationMatrix(mx4); tgG.position.set(P[0] + H0[0] * .01, P[1] + H0[1] * .01, P[2] + H0[2] * .01); tgG.scale.set(1.2, 1.2, Math.max(fk, .001) * 1.2); tgG.visible = fk > .02;
             v3z.set(P[0] - P[IH * 3], P[1] - P[IH * 3 + 1], P[2] - P[IH * 3 + 2]).applyQuaternion(qW);
             tgG.position.set(P[IH * 3] + v3z.x + H0[0] * .01, P[IH * 3 + 1] + v3z.y + H0[1] * .01, P[IH * 3 + 2] + v3z.z + H0[2] * .01); tgG.quaternion.premultiply(qW);
             prs.forEach((g, i) => { g.rotation.y = (i ? 1 : -1) * (.25 + fk * .3) });
@@ -2627,16 +2637,16 @@
           renderer.setSize(W, H, false); cam.aspect = W / H; cam.updateProjectionMatrix();
           const halfH = Math.tan(27.5 * Math.PI / 180) * 8, halfW = halfH * (W / H);
           // each section is fitted around its own panel, so tall panels no longer shrink every scene
-          LS = panelsEl.map(pn => {
+          LS = panelsEl.map((pn, idx) => {
             const pH = pn ? pn.offsetHeight : 0, pW = pn ? pn.offsetWidth : 0;
             if (stackMQ.matches) {
               const top = 72, bottom = Math.max(top + 90, vh - 20 - pH - 12), cy = (top + bottom) / 2, rh = (bottom - top) / H * halfH;
-              return { tx: 0, ty: halfH * (1 - 2 * cy / H), ts: clamp(Math.min(halfW / 3.6, rh / 3.1, 1), .22, 1) };
+              return { tx: 0, ty: halfH * (1 - 2 * cy / H), ts: clamp(Math.min(halfW / 3.6, rh / (idx === 3 ? 2.2 : 3.1), 1), idx === 3 ? .32 : .22, 1) };
             }
             const left = W * .08 + pW + 24, right = W - 40, free = Math.max(right - left, 120);
             return { tx: halfW * (2 * ((left + right) / 2) / W - 1), ty: 0, ts: clamp(Math.min(halfW * free / W / 3.7, (H - 72) / H * halfH / 3.3, 1), .26, 1) };
           });
-          if (S[3]) S[3].fit = stackMQ.matches ? 1.12 : 1.28;
+          if (S[3]) S[3].fit = stackMQ.matches ? 1.3 : 1.28;
           measure();
         };
         let lrq = 0; const relayout = () => { cancelAnimationFrame(lrq); lrq = requestAnimationFrame(layout) };
